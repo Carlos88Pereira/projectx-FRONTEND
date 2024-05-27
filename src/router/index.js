@@ -40,8 +40,11 @@ const routes = [
 
 let isAuthenticated = false;
 
+let userStatusResolved = false;
+
 onAuthStateChanged(auth, (user) => {
   isAuthenticated = !!user;
+  userStatusResolved = true;
 });
 
 const router = createRouter({
@@ -50,11 +53,26 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: "LoginPage" }); 
+  if (to.meta.requiresAuth) {
+    if (!userStatusResolved) {
+      const unsubscribe = auth.onAuthStateChanged(user => {
+        unsubscribe();
+        if (user) {
+          next();
+        } else {
+          next('/login');
+        }
+      });
+    } else if (!isAuthenticated) {
+      next('/login');
+    } else {
+      next();
+    }
   } else {
     next();
   }
 });
+
+
 
 export default router;
