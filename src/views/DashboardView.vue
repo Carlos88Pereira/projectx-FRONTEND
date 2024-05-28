@@ -3,7 +3,7 @@
     <div class="tweet-form mb-4 p-4 bg-light rounded">
       <div class="d-flex align-items-center mb-3">
         <img
-          :src="profileImage"
+          :src="userProfileImage"
           alt="Profile"
           class="profile-image rounded-circle me-3"
         />
@@ -32,11 +32,12 @@
       >
         <div class="d-flex align-items-start">
           <img
-            :src="profileImage"
+            :src="tweet.profileImage || defaultProfileImage"
             alt="Profile"
             class="profile-image-small rounded-circle me-2"
           />
           <div class="tweet-content">
+            <h5>{{ tweet.username }}</h5>
             <p class="mb-1">{{ tweet.tweet }}</p>
             <div v-if="tweet.imageUrl">
               <a
@@ -56,7 +57,7 @@
                 @click="toggleLike(tweet.id)"
                 class="btn btn-outline-primary btn-sm me-2"
               >
-                Like ({{ tweet.likes }})
+                Like ({{ tweet.likes || 0 }})
               </button>
               <button
                 @click="deleteTweet(tweet.id)"
@@ -64,9 +65,17 @@
               >
                 Delete
               </button>
+              <button
+                @click="toggleFollow(tweet.uid)"
+                class="btn btn-outline-secondary btn-sm"
+              >
+                {{ followingUsers.includes(tweet.uid) ? "Unfollow" : "Follow" }}
+              </button>
             </div>
             <small v-if="tweet.timestamp" class="text-muted">
-              {{ new Date(tweet.timestamp.seconds * 1000).toLocaleString() }}
+              {{
+                new Date(tweet.timestamp.seconds * 1000).toLocaleString()
+              }}
             </small>
             <small v-else class="text-muted">Timestamp não disponível</small>
           </div>
@@ -92,6 +101,7 @@ import {
   getDocs,
   where,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import {
   getStorage,
@@ -106,13 +116,28 @@ import "lightbox2/dist/js/lightbox.js";
 import "jquery"; //npm install jquery -> com a lightbox para abrir as imagens e fica em tamanho maior
 
 const tweet = ref("");
-const profileImage = ref(
-  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ALtLfFX6o3KXfDw57OohwBS4-s8MU2f_VePXPx0zbA&s"
-);
+const userProfileImage = ref("");
+const defaultProfileImage =
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ALtLfFX6o3KXfDw57OohwBS4-s8MU2f_VePXPx0zbA&s";
 const tweetImage = ref(null);
 const tweets = ref([]);
+const followingUsers = ref([]);
 
 const storage = getStorage(); // Obtenha a instância do Firebase Storage
+
+const loadUserProfileImage = async () => {
+  const user = auth.currentUser;
+  if (user) {
+    const userDoc = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userDoc);
+    if (userSnap.exists()) {
+      userProfileImage.value =
+        userSnap.data().profileImage || defaultProfileImage;
+    } else {
+      console.error("Usuário não encontrado.");
+    }
+  }
+};
 
 const postTweet = async () => {
   const user = auth.currentUser;
@@ -149,9 +174,7 @@ const postTweet = async () => {
   tweetImage.value = null;
 };
 
-const onImageChange = (event) => {
-  tweetImage.value = event.target.files[0];
-};
+
 
 // Função para curtir um tweet
 const toggleLike = async (tweetId) => {
@@ -195,7 +218,60 @@ const loadTweets = async () => {
   });
 };
 
+const loadFollowingUsers = async () => {
+  const user = auth.currentUser;
+  if (user) {
+    const userDoc = doc(db, "followers", user.uid);
+    const userSnap = await getDoc(userDoc);
+    if (userSnap.exists() && userSnap.data().following) {
+      followingUsers.value = userSnap.data().following;
+    }
+  }
+};
+
+// Função para seguir/deixar de seguir um usuário e atualizar a lista de seguidores
+const toggleFollow = async (uid) => {
+  const user = auth.currentUser;
+  if (user) {
+    const userDoc = doc(db, "followers", user.uid);
+    const userSnap = await getDoc(userDoc);
+
+    const targetUserDoc = doc(db, "followers", uid);
+    const targetUserSnap = await getDoc(targetUserDoc);
+
+    if (userSnap.exists() && targetUserSnap.exists()) {
+      const currentFollowing = userSnap.data().following || [];
+      const isFollowing = currentFollowing.includes(uid);
+      const updatedFollowing = isFollowing
+        ? currentFollowing.filter((id) => id !== uid)
+        : [...currentFollowing, uid];
+
+      await updateDoc(userDoc, { following: updatedFollowing });
+      followingUsers.value = updatedFollowing;
+
+      // Atualiza a lista de seguidores do usuário seguido/deixado de seguir
+      const currentFollowers = targetUserSnap.data().followers || [];
+      const updatedFollowers = isFollowing
+        ? currentFollowers.filter((id) => id !== user.uid)
+        : [...currentFollowers, user.uid];
+
+      await updateDoc(targetUserDoc, { followers: updatedFollowers });
+    } else {
+      // Se o documento de seguidores não existir, crie-o
+      if (!userSnap.exists()) {
+        await setDoc(userDoc, { following: [uid] });
+        followingUsers.value = [uid];
+      }
+      if (!targetUserSnap.exists()) {
+        await setDoc(targetUserDoc, { followers: [user.uid] });
+      }
+    }
+  }
+};
+
 onMounted(() => {
+  loadUserProfileImage();
+  loadFollowingUsers();
   loadTweets();
 });
 </script>
