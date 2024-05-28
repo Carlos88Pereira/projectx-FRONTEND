@@ -56,7 +56,7 @@
                 @click="toggleLike(tweet.id)"
                 class="btn btn-outline-primary btn-sm me-2"
               >
-                Like ({{ likesCount }})
+                Like ({{ tweet.likes }})
               </button>
               <button
                 @click="deleteTweet(tweet.id)"
@@ -111,7 +111,6 @@ const profileImage = ref(
 );
 const tweetImage = ref(null);
 const tweets = ref([]);
-const likesCount = ref(0);
 
 const storage = getStorage(); // Obtenha a instância do Firebase Storage
 
@@ -160,19 +159,19 @@ const toggleLike = async (tweetId) => {
   if (user) {
     const likeRef = doc(db, "likes", `${user.uid}_${tweetId}`);
     const likeSnap = await getDoc(likeRef);
+    const tweet = tweets.value.find((tweet) => tweet.id === tweetId);
     if (likeSnap.exists()) {
       await deleteDoc(likeRef); // Unlike the tweet
-      likesCount.value--; // Decrease the likes count
+      tweet.likes--; // Decrease the likes count
     } else {
       await setDoc(likeRef, {
         uid: user.uid,
         tweetId: tweetId,
       }); // Like the tweet
-      likesCount.value++; // Increase the likes count
+      tweet.likes++; // Increase the likes count
     }
   }
 };
-
 // Função para deletar um tweet
 const deleteTweet = async (tweetId) => {
   const tweetRef = doc(db, "tweets", tweetId);
@@ -215,9 +214,9 @@ onMounted(() => {
 .tweet-image {
   max-width: 100%;
   height: auto;
-  max-height: 300px; /* Ajuste a altura máxima da imagem */
+  max-height: 300px;
   border-radius: 10px;
-  object-fit: cover; /* Mantém a proporção da imagem */
+  object-fit: cover;
 }
 
 .post-container {
