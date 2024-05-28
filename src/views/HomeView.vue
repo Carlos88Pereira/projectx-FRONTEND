@@ -43,15 +43,15 @@
           <ul class="list-group">
             <li
               class="list-group-item"
-              v-for="suggestion in suggestions"
-              :key="suggestion.handle"
+              v-for="user in users"
+              :key="user.uid"
             >
               <div class="d-flex justify-content-between">
                 <div>
-                  <h5>{{ suggestion.name }}</h5>
-                  <p>{{ suggestion.handle }}</p>
+                  <h5>{{ user.firstname }}</h5>
+                  <p>{{ user.handle }}</p>
                 </div>
-                <button class="btn btn-outline-primary">Seguir</button>
+                <button @click="followUser(user.uid)" class="btn btn-outline-primary">Seguir</button>
               </div>
             </li>
           </ul>
@@ -64,14 +64,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase/firebase';
 
 const articles = ref([]);
 const trends = ref(["#Tendência1", "#Tendência2", "#Tendência3"]); // Tendências simuladas
-const suggestions = ref([ // Sugestões simuladas
-  { name: "Usuário 1", handle: "@usuario1" },
-  { name: "Usuário 2", handle: "@usuario2" },
-  { name: "Usuário 3", handle: "@usuario3" }
-]);
+const users = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
@@ -89,7 +87,17 @@ const fetchNews = async () => {
   }
 };
 
-onMounted(fetchNews);
+const fetchUsers = async () => {
+  const usersSnapshot = await getDocs(collection(db, 'users'));
+  users.value = usersSnapshot.docs.map(doc => doc.data());
+};
+
+
+
+onMounted(() => {
+  fetchNews();
+  fetchUsers();
+});
 </script>
 
 <style scoped>

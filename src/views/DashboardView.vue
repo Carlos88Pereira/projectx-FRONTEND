@@ -73,9 +73,7 @@
               </button>
             </div>
             <small v-if="tweet.timestamp" class="text-muted">
-              {{
-                new Date(tweet.timestamp.seconds * 1000).toLocaleString()
-              }}
+              {{ new Date(tweet.timestamp.seconds * 1000).toLocaleString() }}
             </small>
             <small v-else class="text-muted">Timestamp não disponível</small>
           </div>
@@ -86,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { db, auth } from "../firebase/firebase";
 import {
   collection,
@@ -120,8 +118,41 @@ const userProfileImage = ref("");
 const defaultProfileImage =
   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ALtLfFX6o3KXfDw57OohwBS4-s8MU2f_VePXPx0zbA&s";
 const tweetImage = ref(null);
-const tweets = ref([]);
+
 const followingUsers = ref([]);
+const tweets = computed(() => {
+  const getTweetData = async () => {
+    const user = auth.currentUser;
+    const followersDoc = doc(db, "followers", user.uid);
+    const followersSnap = await getDoc(followersDoc);
+    const followersData = followersSnap.data();
+    const followersUids = followersData.followers; // assuming 'followers' is an array of UIDs
+
+    const tweetsQuery = query(
+      collection(db, "tweets"),
+      where("uid", "in", [...followersUids, user.uid])
+    );
+    const tweetsSnapshot = await getDocs(tweetsQuery);
+    const tweetsCollection = tweetsSnapshot.docs.map((doc) => doc.data());
+
+    const tweetData = await Promise.all(
+      tweetsCollection.map(async (tweet) => {
+        const userDoc = doc(db, "users", tweet.uid);
+        const userSnapshot = await getDoc(userDoc);
+        const userData = userSnapshot.data();
+        return {
+          ...tweet,
+          profileImage: userData.profileImage,
+          username: userData.username,
+        };
+      })
+    );
+
+    return tweetData;
+  };
+
+  return getTweetData();
+});
 
 const storage = getStorage(); // Obtenha a instância do Firebase Storage
 
@@ -148,6 +179,7 @@ const postTweet = async () => {
       tweet: tweet.value,
       timestamp: serverTimestamp(),
       likes: 0,
+      profileImage: userProfileImage.value, // Add this line
     };
 
     if (tweetImage.value) {
@@ -173,8 +205,6 @@ const postTweet = async () => {
   tweet.value = "";
   tweetImage.value = null;
 };
-
-
 
 // Função para curtir um tweet
 const toggleLike = async (tweetId) => {
