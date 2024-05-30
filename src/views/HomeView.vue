@@ -1,7 +1,6 @@
 <template>
   <div class="container mt-4">
     <div class="row">
-      <!-- Feed de Notícias -->
       <div class="col-md-8">
         <h2>Feed de Notícias</h2>
         <div v-if="loading" class="text-center">Carregando notícias...</div>
@@ -18,9 +17,7 @@
         </div>
       </div>
 
-      <!-- Barra Lateral -->
       <div class="col-md-4">
-        <!-- Tendências -->
         <div class="mb-4">
           <h2>Tendências</h2>
           <ul class="list-group">
@@ -28,7 +25,6 @@
           </ul>
         </div>
 
-        <!-- Sugestões de Seguimento -->
         <div>
           <h2>Sugestões de Seguimento</h2>
           <ul class="list-group">
