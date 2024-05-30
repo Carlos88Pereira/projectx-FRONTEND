@@ -12,8 +12,7 @@
                 class="form-control"
                 id="firstName"
                 name="firstName"
-                v-model="firstName"
-              />
+                v-model="firstName"/>
             </div>
             <div class="mb-3">
               <label for="lastName" class="form-label">Last Name</label>
@@ -44,6 +43,7 @@
                 name="password"
                 v-model="password"
               />
+              
             </div>
             <div class="mb-3">
               <label for="confirmPassword" class="form-label">Confirm Password</label>
@@ -148,6 +148,7 @@ const registerAction = async () => {
     const user = userCredential.user;
 
     await setDoc(doc(db, "users", user.uid), {
+
       firstName: firstName.value, 
       lastName: lastName.value, 
       email: email.value,

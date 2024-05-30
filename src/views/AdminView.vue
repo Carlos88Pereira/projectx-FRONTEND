@@ -8,6 +8,7 @@
       <div class="profile-container">
         <img :src="selectedUser.profileImage" alt="Profile Image" class="profile-image">
         <h2>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</h2>
+        <p><strong>Bio:</strong> {{ selectedUser.bio }}</p>
         <p><strong>Email:</strong> {{ selectedUser.email }}</p>
         <p><strong>Birthday:</strong> {{ selectedUser.birthday }}</p>
         <p><strong>Location:</strong> {{ selectedUser.location }}</p>
@@ -24,6 +25,10 @@
         <div class="mb-3">
           <label for="editLastName" class="form-label">Last Name</label>
           <input v-model="editLastName" type="text" class="form-control" id="editLastName">
+        </div>
+        <div class="mb-3">
+          <label for="editBio" class="form-label">Bio</label>
+          <input v-model="editBio" type="text" class="form-control" id="editLastName">
         </div>
         <div class="mb-3">
           <label for="editBirthday" class="form-label">Birthday</label>
@@ -73,6 +78,7 @@ const isEditing = ref(false);
 
 const editFirstName = ref('');
 const editLastName = ref('');
+const editBio = ref('');
 const editBirthday = ref('');
 const editLocation = ref('');
 const editWebsite = ref('');
@@ -122,6 +128,7 @@ const toggleEditMode = () => {
   if (isEditing.value) {
     editFirstName.value = selectedUser.value.firstName;
     editLastName.value = selectedUser.value.lastName;
+    editBio.value = selectedUser.value.bio;
     editBirthday.value = selectedUser.value.birthday;
     editLocation.value = selectedUser.value.location;
     editWebsite.value = selectedUser.value.website;
@@ -214,7 +221,7 @@ const resetEditFields = () => {
 
 .profile-image {
   max-width: 150px;
-  height: auto;
+  height: 150px;
   border-radius: 50%;
   margin-bottom: 10px;
 }

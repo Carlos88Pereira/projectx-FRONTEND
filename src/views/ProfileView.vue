@@ -9,6 +9,7 @@
           <div class="card-body">
             <div v-if="loading" class="text-center">
               Carregando...
+              
             </div>
             <div v-else class="profile-info text-center">
               <img :src="user.profileImage" alt="Profile" class="profile-image rounded-circle mb-3" />

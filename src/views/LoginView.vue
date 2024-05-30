@@ -68,11 +68,17 @@ const loginAction = async () => {
     await signInWithEmailAndPassword(auth, email.value, password.value);
     router.push("/home");
   } catch (error) {
-    loginError.value = error.message;
+    if (error.code === "auth/wrong-password") {
+      loginError.value = "The password you entered is incorrect. Please try again.";
+    } else {
+      loginError.value = "The password you entered is incorrect. Please try again.";
+    }
   } finally {
     isSubmitting.value = false;
   }
 };
+
+
 </script>
 
 <style scoped>

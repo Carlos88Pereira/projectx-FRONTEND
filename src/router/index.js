@@ -3,8 +3,6 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { ref } from "vue";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
-
-
 import LoginPage from "../views/LoginView.vue";
 import RegisterPage from "../views/RegisterView.vue";
 import Dashboard from "../views/DashboardView.vue";
